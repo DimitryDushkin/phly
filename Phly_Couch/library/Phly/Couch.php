@@ -433,8 +433,7 @@ class Phly_Couch
 
         $response = $this->_prepareAndSend($db . '/' . $id, 'DELETE', $options);
         if (!$response->isSuccessful()) {            
-            //throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
-        	Zend_Debug::dump($response);
+            throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
         }
        
         return new Phly_Couch_Result($response);
