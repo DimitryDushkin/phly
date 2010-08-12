@@ -1,5 +1,10 @@
 <?php
 require_once 'Zend/Json.php';
+require_once 'Zend/Http/Client.php';
+require_once 'Phly/Couch/Exception.php';
+require_once 'Phly/Couch/Document.php';
+require_once 'Phly/Couch/Result.php';
+require_once 'Phly/Couch/DocumentSet.php';
 
 class Phly_Couch
 {
@@ -84,10 +89,8 @@ class Phly_Couch
      */
     public function setDb($db)
     {
-        if (!preg_match('/^[a-z][a-z0-9_$()+-\/]+$/', $db)) {
-            require_once 'Phly/Couch/Exception.php';
+        if (!preg_match('/^[a-z][a-z0-9_$()+-\/]+$/', $db))         
             throw new Phly_Couch_Exception(sprintf('Invalid database specified: "%s"', htmlentities($db)));
-        }
         $this->_db = $db;
         return $this;
     }
@@ -180,8 +183,7 @@ class Phly_Couch
     {
         if (null === $this->_client) {
             $client = self::getDefaultHttpClient();
-            if (null === $client) {
-                require_once 'Zend/Http/Client.php';
+            if (null === $client) {           
                 $client = new Zend_Http_Client;
             }
             $this->setHttpClient($client);
@@ -212,12 +214,10 @@ class Phly_Couch
     {
         $this->_prepareUri('');
         $response = $this->_prepareAndSend('', 'GET');
-        if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
+        if (!$response->isSuccessful()){
             throw new Phly_Couch_Exception(sprintf('Failed retrieving server information; received response code "%s"', (string) $response->getStatus()));
-        }
-
-        require_once 'Phly/Couch/Result.php';
+    	}
+        
         return new Phly_Couch_Result($response);
     }
 
@@ -230,10 +230,9 @@ class Phly_Couch
     {
         $response = $this->_prepareAndSend('_all_dbs', 'GET');
         if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception(sprintf('Failed retrieving database list; received response code "%s"', (string) $response->getStatus()));
-        }
-        require_once 'Phly/Couch/Result.php';
+    	}
+    	
         return new Phly_Couch_Result($response);
     }
 
@@ -252,10 +251,9 @@ class Phly_Couch
         $response = $this->_prepareAndSend($db . '/_compact', 'POST');
         $status = $response->getStatus();
         if (202 !== $status) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception(sprintf('Failed compacting database "%s": received response code "%s"', $db, (string) $response->getStatus()));
-        }
-        require_once 'Phly/Couch/Result.php';
+    	}
+    	
         return new Phly_Couch_Result($response);
     }
 
@@ -270,11 +268,10 @@ class Phly_Couch
     {
         $db = $this->_verifyDb($db);
         $response = $this->_prepareAndSend($db, 'PUT');
-        if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
+        if (!$response->isSuccessful()) {           
             throw new Phly_Couch_Exception(sprintf('Failed creating database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
-        require_once 'Phly/Couch/Result.php';
+        
         return new Phly_Couch_Result($response);
     }
 
@@ -290,10 +287,9 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
         $response = $this->_prepareAndSend($db, 'DELETE');
         if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception(sprintf('Failed dropping database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
-        require_once 'Phly/Couch/Result.php';
+        
         return new Phly_Couch_Result($response);
     }
 
@@ -309,10 +305,9 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
         $response = $this->_prepareAndSend($db, 'GET');
         if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception(sprintf('Failed querying database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
-        require_once 'Phly/Couch/Result.php';
+        
         return new Phly_Couch_Result($response);
     }
 
@@ -336,11 +331,8 @@ class Phly_Couch
 
         $response = $this->_prepareAndSend($db . '/_all_docs', 'GET', $options);
         if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception(sprintf('Failed querying database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
-
-        require_once 'Phly/Couch/DocumentSet.php';
         return new Phly_Couch_DocumentSet($response->getBody());
     }
 
@@ -363,8 +355,6 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
 
         $response = $this->_prepareAndSend($db . '/' . $id, 'GET', $options);
-
-        require_once 'Phly/Couch/Document.php';
         return new Phly_Couch_Document($response->getBody());
     }
 
@@ -389,22 +379,17 @@ class Phly_Couch
 
         if (is_string($document)) {
             if ('{' != substr($document, 0, 1)) {
-                require_once 'Phly/Couch/Exception.php';
                 throw new Phly_Couch_Exception('Invalid document provided');
             }
-            require_once 'Phly/Couch/Document.php';
             $document = new Phly_Couch_Document($document);
         } elseif (is_array($document)) {
-            require_once 'Phly/Couch/Document.php';
             $document = new Phly_Couch_Document($document);
         } elseif (!$document instanceof Phly_Couch_Document) {
-            require_once 'Phly/Couch/Exception.php';
             throw new Phly_Couch_Exception('Invalid document provided');
         }
 
         if (null !== $document->getRevision()) {
             if ((null === $id) && (null === ($id = $document->getId()))) {
-                require_once 'Phly/Couch/Exception.php';
                 throw new Phly_Couch_Exception('Document updates require a document id; none provided');
             }
             $method = 'PUT';
@@ -413,21 +398,17 @@ class Phly_Couch
         $response = $this->_prepareAndSend($path, $method);
         $status   = $response->getStatus();
         switch ($status) {
-            case 415:
-                require_once 'Phly/Couch/Exception.php';
+            case 415:                
                 throw new Phly_Couch_Exception('Content-Type must be application/json.');
                 break;
             case 412:
-                require_once 'Phly/Couch/Exception.php';
                 throw new Phly_Couch_Exception(sprintf('Document with the specified document id "%s" already exists', $id));
                 break;
             case 409:
-                require_once 'Phly/Couch/Exception.php';
-                throw new Phly_Couch_Exception(sprintf('Document with document id "%s" does not contain the revision "%s"', $id, $data['_rev']));
+                throw new Phly_Couch_Exception(sprintf('Document with document id "%s" does not contain the revision "%s"', $id, $document->getRevision()));
                 break;
             case 201:
             default:
-                require_once 'Phly/Couch/Result.php';
                 return new Phly_Couch_Result($response);
                 break;
         }
@@ -451,12 +432,11 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
 
         $response = $this->_prepareAndSend($db . '/' . $id, 'DELETE', $options);
-        if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
-            throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
+        if (!$response->isSuccessful()) {            
+            //throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
+        	Zend_Debug::dump($response);
         }
-
-        require_once 'Phly/Couch/Result.php';
+       
         return new Phly_Couch_Result($response);
     }
 
@@ -478,21 +458,18 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
 
         if (is_array($documents)) {
-            require_once 'Phly/Couch/DocumentSet.php';
+            
             $documents = new Phly_Couch_DocumentSet($documents);
-        } elseif (!$documents instanceof Phly_Couch_DocumentSet) {
-            require_once 'Phly/Couch/Exception.php';
+        } elseif (!$documents instanceof Phly_Couch_DocumentSet) {            
             throw new Phly_Couch_Exception('Invalid document set provided to bulk save operation');
         }
 
         $this->getHttpClient()->setRawData($documents->toJson());
         $response = $this->_prepareAndSend($db . '/_bulk_docs', 'POST', $options);
-        if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
+        if (!$response->isSuccessful()) {            
             throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
         }
 
-        require_once 'Phly/Couch/Result.php';
         return new Phly_Couch_Result($response);
     }
 
@@ -514,12 +491,10 @@ class Phly_Couch
         $db = $this->_verifyDb($db);
 
         $response = $this->_prepareAndSend($db . '/_design/'.$name, 'GET', $options);
-        if (!$response->isSuccessful()) {
-            require_once 'Phly/Couch/Exception.php';
+        if (!$response->isSuccessful()) {            
             throw new Phly_Couch_Exception(sprintf('Failed querying database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
 
-        require_once 'Phly/Couch/DocumentSet.php';
         return new Phly_Couch_DocumentSet($response->getBody());
     }
 
@@ -555,8 +530,7 @@ class Phly_Couch
      * @return Zend_Http_Response
      */
     protected function _prepareAndSend($path, $method, array $queryParams = null)
-    {
-        
+    {      
         $client = $this->getHttpClient();
         $this->_prepareUri($path, $queryParams);
         $response = $client->request($method);
@@ -576,7 +550,6 @@ class Phly_Couch
         if (null === $db) {
             $db = $this->getDb();
             if (null === $db) {
-                require_once 'Phly/Couch/Exception.php';
                 throw new Phly_Couch_Exception('Must specify a database to query');
             }
         } else {
