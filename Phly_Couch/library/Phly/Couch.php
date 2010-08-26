@@ -456,8 +456,7 @@ class Phly_Couch
         }
         $db = $this->_verifyDb($db);
 
-        if (is_array($documents)) {
-            
+        if (is_array($documents)) {            
             $documents = new Phly_Couch_DocumentSet($documents);
         } elseif (!$documents instanceof Phly_Couch_DocumentSet) {            
             throw new Phly_Couch_Exception('Invalid document set provided to bulk save operation');
@@ -466,12 +465,34 @@ class Phly_Couch
         $this->getHttpClient()->setRawData($documents->toJson());
         $response = $this->_prepareAndSend($db . '/_bulk_docs', 'POST', $options);
         if (!$response->isSuccessful()) {            
-            throw new Phly_Couch_Exception(sprintf('Failed deleting document with id "%s" from database "%s"; received response code "%s"', $id, $db, (string) $response->getStatus()));
+            throw new Phly_Couch_Exception(sprintf('Failed saving documents to database "%s"; received response code "%s"', $db, (string) $response->getStatus()));
         }
 
         return new Phly_Couch_Result($response);
     }
-
+	
+    /**
+     * Saves standalone file to current datebase
+     * 
+     * @TODO send correct mime-type
+     * 
+     * @param string $tmpFileName temporary file name of received file
+     * @param string $filename desired filename
+     * @param null|string $id
+     */
+    public function saveStandaloneAttachment($tmpFileName, $filename, $id = null) {
+    	$client = $this->getHttpClient();
+   
+    	if (null == $id) {
+    		$id = 'file-' . uniqid(true);
+    	}
+    	
+    	$this->_prepareUri($this->getDb() . '/' . $id . '/' . $filename);
+    	$client->setFileUpload($tmpFileName, 'attachment');
+    	$response = $client->request('PUT');
+    	return new Phly_Couch_Result($response);
+    }
+    
     /**
      * Retrieve a view
      *
